@@ -7,10 +7,16 @@ import { useState } from "react";
 import ButtonIcon from "./components/ButtonIcon";
 import { MaterialIcons } from "@expo/vector-icons";
 import ButtonCircle from "./components/ButtonCircle";
+import EmojiPickerModal from "./components/EmojiPickerModal";
+import EmojiList from "./components/EmojiList";
+import EmojiSticker from "./components/EmojiSticker";
 
 export default function App() {
   const [showAppOptions, setShowAppOptions] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [pickedEmoji, setPickedEmoji] = useState<number | null>(null);
+
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -30,25 +36,43 @@ export default function App() {
   };
 
   const onAddSticker = () => {
-    // we will implement this later
+    setIsModalVisible(true);
+  };
+
+  const onModalClose = () => {
+    setIsModalVisible(false);
   };
 
   const onSaveImageAsync = async () => {
     // we will implement this later
   };
 
+  const onSelectEmoji = (emoji: number) => {
+    setPickedEmoji(emoji);
+  };
+
   return (
     <View style={styles.container}>
-      <Image
-        source={selectedImage ? { uri: selectedImage } : defaultImage}
+      <View
         style={{
+          flexBasis: "70%",
           width: "100%",
           maxWidth: 320,
-          flexBasis: "70%",
           marginHorizontal: "auto",
+          overflow: "hidden",
           borderRadius: 8,
         }}
-      />
+      >
+        <Image
+          source={selectedImage ? { uri: selectedImage } : defaultImage}
+          style={{
+            borderRadius: 8,
+          }}
+        />
+        {pickedEmoji && (
+          <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
+        )}
+      </View>
       {showAppOptions ? (
         <View style={styles.optionsContainer}>
           <View style={styles.optionsRow}>
@@ -81,6 +105,10 @@ export default function App() {
           />
         </View>
       )}
+
+      <EmojiPickerModal visible={isModalVisible} onClose={onModalClose}>
+        <EmojiList onSelect={onSelectEmoji} onCloseModal={onModalClose} />
+      </EmojiPickerModal>
 
       <StatusBar style="auto" />
     </View>
