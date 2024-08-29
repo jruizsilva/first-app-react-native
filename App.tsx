@@ -23,22 +23,16 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <View
+      <Image
+        source={selectedImage ? { uri: selectedImage } : defaultImage}
         style={{
+          width: "100%",
           maxWidth: 320,
           flexBasis: "70%",
           marginHorizontal: "auto",
-          overflow: "hidden",
           borderRadius: 8,
-          display: "flex",
         }}
-      >
-        <Image
-          source={selectedImage ? { uri: selectedImage } : defaultImage}
-          style={{ flexBasis: "100%" }}
-          resizeMode="contain"
-        />
-      </View>
+      />
       <View style={styles.footerContainer}>
         <Button
           label="Choose a photo"
