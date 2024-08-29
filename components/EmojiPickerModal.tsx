@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-interface Props extends ModalProps {
+interface Props extends Omit<ModalProps, "visible" | "transparent"> {
   visible: boolean;
   onClose: () => void;
 }
