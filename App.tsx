@@ -32,7 +32,7 @@ export default function App() {
         setViewHeight(height);
       });
     }
-  }, [imageRef.current]);
+  }, [selectedImage]);
 
   if (status === null) {
     requestPermission();
@@ -72,6 +72,8 @@ export default function App() {
       if (Platform.OS !== "web") {
         const localUri = await captureRef(imageRef, {
           quality: 1,
+          width: viewWith,
+          height: viewHeight,
         });
 
         await MediaLibrary.saveToLibraryAsync(localUri);
