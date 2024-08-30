@@ -1,9 +1,9 @@
 import { StatusBar } from "expo-status-bar";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, Platform, StyleSheet, View } from "react-native";
 import { defaultImage } from "./assets/images";
 import Button from "./components/Button";
 import * as ImagePicker from "expo-image-picker";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ButtonIcon from "./components/ButtonIcon";
 import { MaterialIcons } from "@expo/vector-icons";
 import ButtonCircle from "./components/ButtonCircle";
@@ -13,6 +13,7 @@ import EmojiSticker from "./components/EmojiSticker";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as MediaLibrary from "expo-media-library";
 import { captureRef } from "react-native-view-shot";
+import domtoimage from "dom-to-image";
 
 export default function App() {
   const [status, requestPermission] = MediaLibrary.usePermissions();
@@ -21,6 +22,17 @@ export default function App() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [pickedEmoji, setPickedEmoji] = useState<number | null>(null);
   const imageRef = useRef<View>(null);
+  const [viewWith, setViewWith] = useState(0);
+  const [viewHeight, setViewHeight] = useState(0);
+
+  useEffect(() => {
+    if (imageRef.current) {
+      imageRef.current.measure((x, y, width, height) => {
+        setViewWith(width);
+        setViewHeight(height);
+      });
+    }
+  }, [imageRef.current]);
 
   if (status === null) {
     requestPermission();
@@ -53,15 +65,31 @@ export default function App() {
   };
 
   const onSaveImageAsync = async () => {
+    if (imageRef.current === null) {
+      return;
+    }
     try {
-      const localUri = await captureRef(imageRef, {
-        // height: 440,
-        quality: 1,
-      });
+      if (Platform.OS !== "web") {
+        const localUri = await captureRef(imageRef, {
+          quality: 1,
+        });
 
-      await MediaLibrary.saveToLibraryAsync(localUri);
-      if (localUri) {
-        alert("Saved!");
+        await MediaLibrary.saveToLibraryAsync(localUri);
+        if (localUri) {
+          alert("Saved!");
+        }
+      } else {
+        const node = imageRef.current as unknown as HTMLElement;
+        const dataUrl = await domtoimage.toJpeg(node, {
+          quality: 1,
+          width: viewWith,
+          height: viewHeight,
+        });
+
+        let link = document.createElement("a");
+        link.download = "sticker-smash.jpeg";
+        link.href = dataUrl;
+        link.click();
       }
     } catch (e) {
       console.log(e);
@@ -77,25 +105,32 @@ export default function App() {
       <View
         style={{
           flexBasis: "70%",
-          width: "100%",
           maxWidth: 320,
+          width: "100%",
           marginHorizontal: "auto",
-          overflow: "hidden",
           borderRadius: 8,
+          overflow: "hidden",
         }}
-        ref={imageRef}
-        collapsable={false}
       >
-        <Image
-          source={selectedImage ? { uri: selectedImage } : defaultImage}
+        <View
           style={{
-            borderRadius: 8,
             height: "100%",
+            width: "100%",
           }}
-        />
-        {pickedEmoji && (
-          <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
-        )}
+          ref={imageRef}
+          collapsable={false}
+        >
+          <Image
+            source={selectedImage ? { uri: selectedImage } : defaultImage}
+            style={{
+              height: "100%",
+              width: "100%",
+            }}
+          />
+          {pickedEmoji && (
+            <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
+          )}
+        </View>
       </View>
       {showAppOptions ? (
         <View style={styles.optionsContainer}>
