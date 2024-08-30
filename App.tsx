@@ -3,19 +3,28 @@ import { Image, StyleSheet, View } from "react-native";
 import { defaultImage } from "./assets/images";
 import Button from "./components/Button";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ButtonIcon from "./components/ButtonIcon";
 import { MaterialIcons } from "@expo/vector-icons";
 import ButtonCircle from "./components/ButtonCircle";
 import EmojiPickerModal from "./components/EmojiPickerModal";
 import EmojiList from "./components/EmojiList";
 import EmojiSticker from "./components/EmojiSticker";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import * as MediaLibrary from "expo-media-library";
+import { captureRef } from "react-native-view-shot";
 
 export default function App() {
+  const [status, requestPermission] = MediaLibrary.usePermissions();
   const [showAppOptions, setShowAppOptions] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [pickedEmoji, setPickedEmoji] = useState<number | null>(null);
+  const imageRef = useRef<View>(null);
+
+  if (status === null) {
+    requestPermission();
+  }
 
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -44,7 +53,19 @@ export default function App() {
   };
 
   const onSaveImageAsync = async () => {
-    // we will implement this later
+    try {
+      const localUri = await captureRef(imageRef, {
+        // height: 440,
+        quality: 1,
+      });
+
+      await MediaLibrary.saveToLibraryAsync(localUri);
+      if (localUri) {
+        alert("Saved!");
+      }
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const onSelectEmoji = (emoji: number) => {
@@ -52,7 +73,7 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <View
         style={{
           flexBasis: "70%",
@@ -62,11 +83,14 @@ export default function App() {
           overflow: "hidden",
           borderRadius: 8,
         }}
+        ref={imageRef}
+        collapsable={false}
       >
         <Image
           source={selectedImage ? { uri: selectedImage } : defaultImage}
           style={{
             borderRadius: 8,
+            height: "100%",
           }}
         />
         {pickedEmoji && (
@@ -111,7 +135,7 @@ export default function App() {
       </EmojiPickerModal>
 
       <StatusBar style="auto" />
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
